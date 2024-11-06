@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tap Balloon Game</title>
+    <style>
+      body {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        background: url("./images/Symbol\ 3\ copy.png");
+        margin: 0;
+      }
+      #pump {
+        position: absolute;
+        bottom: 15%;
+        right: 25%;
+        cursor: pointer;
+        width: 15%;
+        height: 25%;
+        transition: transform 0.1s;
+      }
+
+      #pump.pumping {
+        transform: scale(1.1);
+      }
+    </style>
+  </head>
+  <body>
+    <img id="pump" src="./images/Symbol 28.png" alt="Pump Air" />
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <script>
+      const canvas = document.getElementById("gameCanvas");
+      const ctx = canvas.getContext("2d");
+
+      let balloons = [];
+      const letters = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
+      const balloonImages = {};
+      const balloonBack = {};
+      // Load balloon images
+      letters.forEach((letter) => {
+        const img = new Image();
+        img.src = `./images/${letter}.png`;
+        balloonImages[letter] = img;
+      });
+
+      class Balloon {
+        constructor(x, y) {
+          this.x = x;
+          this.y = y;
+          this.size = 60; // Adjust the size as needed
+          this.letter = letters[Math.floor(Math.random() * letters.length)];
+          this.image = balloonImages[this.letter];
+
+          this.speed = Math.random() * 2 + 1; // Random speed
+          this.direction = Math.random() * 2 * Math.PI; // Random direction
+        }
+
+        move() {
+          this.x += Math.cos(this.direction) * this.speed; // Move in random direction
+          this.y -= this.speed; // Move up
+        }
+
+        draw() {
+          ctx.beginPath();
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+
+          ctx.fillStyle = "red";
+          ctx.fill();
+
+          ctx.drawImage(
+            this.image,
+            this.x - this.size / 2,
+            this.y - this.size,
+            this.size,
+            this.size
+          ); // Draw balloon image
+        }
+      }
+
+      function createBalloon() {
+        const x = Math.random() * (canvas.width - 60) + 30; // Random x position within canvas
+        const balloon = new Balloon(x, canvas.height);
+        balloons.push(balloon);
+      }
+
+      function pumpAir() {
+        createBalloon();
+        const pumpButton = document.getElementById("pump");
+        pumpButton.classList.add("pumping");
+        setTimeout(() => {
+          pumpButton.classList.remove("pumping");
+        }, 100);
+      }
+
+      function burstBalloon(event) {
+        const mouseX = event.clientX - canvas.getBoundingClientRect().left;
+        const mouseY = event.clientY - canvas.getBoundingClientRect().top;
+
+        for (let i = balloons.length - 1; i >= 0; i--) {
+          const balloon = balloons[i];
+          const distance = Math.sqrt(
+            (mouseX - balloon.x) ** 2 + (mouseY - balloon.y) ** 2
+          );
+          if (distance < balloon.size / 2) {
+            balloons.splice(i, 1); // Remove the balloon from the array
+            break; // Exit loop after bursting one balloon
+          }
+        }
+      }
+
+      function gameLoop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (const balloon of balloons) {
+          balloon.move();
+          balloon.draw();
+        }
+        requestAnimationFrame(gameLoop);
+      }
+
+      document.getElementById("pump").addEventListener("click", pumpAir);
+      canvas.addEventListener("click", burstBalloon);
+      gameLoop();
+    </script>
+  </body>
+</html>
